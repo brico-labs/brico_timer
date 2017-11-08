@@ -1,3 +1,8 @@
+//---------------------------------------------------------------------------------------------------
+//Este es parte del codigo original que descrive el funcionamiento del display (ignorar toda esta parte)
+//---------------------------------------------------------------------------------------------------
+
+
 // This simplified demo scrolls the text of the Jaberwoky poem directly from flash memory
 // Full article at  http://wp.josh.com/2016/05/20/huge-scrolling-arduino-led-sign/
 
@@ -57,6 +62,9 @@ static const uint8_t onBits=0b11111110;   // Bit pattern to write to port to tur
 
 
 
+//------------------------------------------------------------------------------------
+//  PINES USADOS EN ARDUINO
+//------------------------------------------------------------------------------------
 
 // led
 #define led 13
@@ -68,6 +76,8 @@ static const uint8_t onBits=0b11111110;   // Bit pattern to write to port to tur
 #define Sensor_vuelta A4
 
 
+//------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
 
 
 
@@ -76,8 +86,9 @@ static const uint8_t onBits=0b11111110;   // Bit pattern to write to port to tur
 
 
 
-
-
+//---------------------------------------------------------------------------------------------------
+//Este es parte del codigo de funcionamiento del display (ignorar toda esta parte)
+//---------------------------------------------------------------------------------------------------
 
 // Sends a full 8 bits down all the pins, represening a single color of 1 pixel
 // We walk though the 8 bits in colorbyte one at a time. If the bit is 1 then we send the 8 bits of row out. Otherwise we send 0. 
@@ -434,10 +445,16 @@ static String Modos [] {"LABERINTO","SIGUELINEAS","VELOCISTAS","COMBATE"};
 
 
 
+//---------------------------------------------------------------------------------------------------
+//El codigo propio para el uso como crono comienza a partir de aqui
+//---------------------------------------------------------------------------------------------------
+
+
+
 
 
 //------------------------------------------------------------------------------------------------------------------
-// CRONO ESTANDAR 
+// CRONO ESTANDAR (Usado para laverinto, y siguelineas)
 //------------------------------------------------------------------------------------------------------------------
 void crono01(){
 
@@ -466,7 +483,7 @@ void crono01(){
   digitalWrite(led, 0);
 
   
-  
+  //Se inicia unicamente con nivel alto en la entrada Boton_Start, pero puede ser detenido por el mismo boton o por el sensor de buelta (por si se usase en la meta)
   while (digitalRead(Boton_Start) == LOW&&digitalRead(Sensor_vuelta)!=LOW) {//Espera a que el boton star este sin pulsar...
   
 
@@ -485,16 +502,15 @@ void crono01(){
     }
 
 
-    
-//Serial.print (minu);Serial.print (":");Serial.print (Seg);Serial.print (":");Serial.println (dec);
 
     
   
-  
+    //formatear los datos MM:SS:DD  
     char crono[0];    
     sprintf(crono,"  %.2d:%.2d:%.2d",minu,Seg,dec);
-    //Serial.println (crono);
+
     
+    //Enviar al display
     cli();
     Send_String( crono , 5 ,  20,  10, 10 ) ;
     sei();
@@ -502,17 +518,17 @@ void crono01(){
    
     //clear();
     show();
-    delay(8);
+    delay(8); //este delay ajusta el tiempo a la medida "real" se puede ajustar mas usando la linea de abajo
     //delayMicroseconds(500);        // pauses for 50 microseconds      
    }
 
   
    while (digitalRead(Boton_Start)==1) delay(5);//asegurarse de no salir con ningun boton pulsado
-   while (digitalRead(Boton_Modo)==0) {if(digitalRead(Boton_Reset)==1)crono01();}
+   while (digitalRead(Boton_Modo)==0) {if(digitalRead(Boton_Reset)==1)crono01();} //Resetear el crono o salir al menu
 }
 
 //------------------------------------------------------------------------------------------------------------------
-// Crono Velocistas
+// Crono Velocistas       identico al alterior pero cuenta tres vueltas
 //------------------------------------------------------------------------------------------------------------------
 void crono02(){
 
@@ -568,14 +584,14 @@ void crono02(){
 
 
     
-//Serial.print (minu);Serial.print (":");Serial.print (Seg);Serial.print (":");Serial.println (dec);
+
 
     
   
   
     char crono[0];    
     sprintf(crono,"  %.2d:%.2d:%.2d",minu,Seg,dec);
-    //Serial.println (crono);
+    
     
     cli();
     Send_String( crono , 5 ,  20,  10, 10 ) ;
@@ -584,14 +600,17 @@ void crono02(){
    
     //clear();
     show();
-    delay(8);
+    delay(8); //Ajuste de riempo
     //delayMicroseconds(500);        // pauses for 50 microseconds    
+    
+    
+    //esta linea es la que lee el sensor, se asegura de que haya transcurrido el minimo de 3seg y decrementa el numero de vueltas. si es 0 sale
     if (digitalRead(Sensor_vuelta)==LOW&& tiempo_ultimo_paso>3)  {tiempo_ultimo_paso=0;if (vueltas_restantes--==0){goto Fin2;}}
    }
 
 Fin2:  
    while (digitalRead(Boton_Start)==1) delay(5);//asegurarse de no salir con ningun boton pulsado
-   while (digitalRead(Boton_Modo)==0) {if(digitalRead(Boton_Reset)==1)crono02();}
+   while (digitalRead(Boton_Modo)==0) {if(digitalRead(Boton_Reset)==1)crono02();} //reset crono o menu principal
 }
 //------------------------------------------------------------------------------------------------------------------
 // Crono Cuenta a tras
@@ -602,8 +621,8 @@ void crono03(){
   unsigned long time_of_tune=0;
   unsigned long tiempoV=0; 
   int   Terminado=0;
-   byte minu=2;
-   byte Seg=1;
+   byte minu=2; //Tiempo 2min <-----
+   byte Seg=1; 
    int dec=1;
      
   clear();
@@ -625,7 +644,7 @@ void crono03(){
 
 
   
-  while (digitalRead(Boton_Stop) == LOW&Terminado==0) {//Espera a que el boton star este sin pulsar...
+  while (digitalRead(Boton_Stop) == LOW&Terminado==0) {//Continuar hasta que la cuenta llegue a cero Salvo que se pulse el boton --OJO--> Boton_Stop
 
 
     dec--;
@@ -652,7 +671,7 @@ Fin:
     char crono[0];    
     
     sprintf(crono,"  %.2d:%.2d:%.2d",minu,Seg,dec);
-    //Serial.println (crono);
+    
     
     cli();
     Send_String( crono , 5 ,  20,  10, 10 ) ;
@@ -706,26 +725,17 @@ void setup() {
   showTextoSimple( 6 , "Modo:" , 0x10 , 0x10 ,0x10 );
   showTextoSimple( 4 , Modos[0].c_str() , 0x30 , 0x5 ,0x5 );
 
-   // initialize serial:
+   // initialize serial: Se puede usar para debug, pero anula la ultima linea del display y envia datos sin sentido cuando edta contando
    //Serial.begin(115200);
 }
 
-static char jabberText[] = 
-      "                                       " 
-      "Twas brillig, and the slithy toves "
-            "Did gyre and gimble in the wabe: "
-      "All mimsy were the borogoves, "
-            "And the mome raths outgrabe. "
-      
-      ;
+
 
   
 //----------------------------------------------------------------------------------------------------
 //                  L O O P
 //----------------------------------------------------------------------------------------------------
 void loop() {
-
-  
 
   
   
@@ -758,35 +768,6 @@ void loop() {
 // string.c_str(). string a contchar
 
 
-//TextoScroll(jabberText);
-//showTextoSimple( 4 ,  "Modo Combate" , 0x20 , 0x20 ,0x20 );
-//TextoScroll("hola que tal mi soy un letrero luminoso con efecto scroll al que le gusta pabonearse de mostrar unos colores vivos y un nivel de luminosidad sin parangon");
-}
-
-
-
-
-void TextoScroll(char texto){
-
-   const char *m = texto;
-              
-  while (*m) {      
-
-
-      for( uint8_t step=0; step<FONT_WIDTH+INTERCHAR_SPACE  ; step++ ) {   // step though each column of the 1st char for smooth scrolling
-
-         cli();
-          delay(20);
-         Send_String( m , step , 0x00, 0x00 , 0x40 );    // Nice and not-too-bright blue hue
-        
-         sei();
-         
-  
-      }
-
-    m++;
-
-  }
 }
 
 
