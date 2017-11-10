@@ -476,10 +476,10 @@ void crono01(){
   while (digitalRead(Boton_Start) != LOW) {}//Espera a que el boton star este sin pulsar...
   digitalWrite(led, 0);
   
-  while (digitalRead(Boton_Start) == LOW ) {}; //Ahora espera a que se pulse el boton star/stop
+  while (digitalRead(Boton_Start) == LOW &&digitalRead(Sensor_vuelta)!=LOW) {}; //Ahora espera a que se pulse el boton star/stop o pulsador/sensor
   digitalWrite(led, 1);
  
-  while (digitalRead(Boton_Start) == HIGH ) {};
+  while (digitalRead(Boton_Start) == HIGH || digitalRead(Sensor_vuelta)==LOW) {};
   digitalWrite(led, 0);
 
   
